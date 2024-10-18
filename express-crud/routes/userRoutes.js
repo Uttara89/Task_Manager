@@ -12,4 +12,8 @@ router.route("/")
 router.route("/:id")
     .get(userController.getOneUser);   // GET request to get a user by ID
 
+// Route for login
+router.route("/login")
+    .post(userController.loginUser);   // POST request to log in a user
+
 module.exports = router;

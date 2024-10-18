@@ -1,5 +1,6 @@
 const User = require("../models/userModel"); // Import the User model
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 // Create a new user
 exports.createUser = async (req, res, next) => {
@@ -35,6 +36,51 @@ exports.createUser = async (req, res, next) => {
         res.status(400).json({
             status: "Failed",
             message: "Failed to create user",
+            error: e.message
+        });
+    }
+};
+
+const JWT_SECRET = 'My_jwt_secret'; 
+
+// Login user
+exports.loginUser = async (req, res, next) => {
+    try {
+        const { email, password } = req.body;
+
+        // Check if the user exists
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({
+                status: "Failed",
+                message: "Invalid email or password"
+            });
+        }
+
+        // Compare the entered password with the hashed password stored in the database
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({
+                status: "Failed",
+                message: "Invalid email or password"
+            });
+        }
+
+        // If passwords match, generate a JWT token (optional, for authentication purposes)
+        const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
+
+        res.status(200).json({
+            status: "Success",
+            message: "Login successful",
+            token, // Send token back (if using JWT)
+            data: {
+                user
+            }
+        });
+    } catch (e) {
+        res.status(500).json({
+            status: "Failed",
+            message: "Login failed",
             error: e.message
         });
     }
